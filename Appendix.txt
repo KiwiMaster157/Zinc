@@ -1,0 +1,256 @@
+================================================================================
+                           Appendix A: Zinc Syntax
+================================================================================
+
+
+
+
+
+
+
+
+
+================================================================================
+                           Appendix B: Berk Library
+================================================================================
+Class           Name            Symbol          Binary          Octal
+--------        --------        --------        --------        --------
+
+Math            Unary_A         <Unary_A>       000000          00
+  Unary_A         Negate          -               X00             0,4
+  Unary_A         Absolute_Value  abs()           X01             1,5
+  Unary_A         Increment       ++              X10             2,6
+  Unary_A         Zero            X, 0            X11             3,7
+Math            Add             +               000001          01
+Math            Multiply        *               000010          02
+Math            Divide          /               000011          03
+Math            Modulo          %               000100          04
+Math            DivideNS        /U              000101          05
+Math            ModuloNS        %U              000110          06
+Math            Define_A        >>              000111          07
+
+Bool            Unary_B          <Unary_B>      001000          10
+  Unary_B         Hold            H               X00             0,4
+  Unary_B         False           F               X01             1,5
+  Unary_B         True            T               X10             2,6
+  Unary_B         Not             !               X11             3,7
+Bool            And             &, /\           001001          11
+Bool            Or              |, \/           001010          12
+Bool            Xor             ^               001011          13
+Compare         Greater         >               001100          14
+Compare         Equals          =               001101          15
+Compare         GreaterNS       >U              001110          16
+Bool            Define_B        >>              001111          17
+
+Flow            Jump            Jmp             010000          20
+Flow            Jump_Reg        JmR             010001          21
+Flow            Jump_If         JiF             010010          22
+Flow            Jump_If_Reg     JIR             010011          23
+
+Memory          Data            Dat             010100          24
+Memory          Recall          Rcl             010101          25
+Memory          Store           Sto             010110          26
+Memory          Save            Sav             010111          27
+
+Print           Text            Text            01100X          20,21
+Print           Hex_Out         Hex             011010          22
+Print           Oct_Out         Oct             011011          23
+Print           Bin_Out0        Bin0            011100          24
+Print           Bin_Out1        Bin1            011101          25
+Print           Dec_Out         Dec             011110          26
+Print           Uns_Out         Uns             011111          27
+
+================================================================================
+                           Appendix C: Berk Syntax
+================================================================================
+
+--------------------------------------------------------------------------------
+                                      Math
+--------------------------------------------------------------------------------
+Unary_A: 000 000 XXX XXX
+  This subclass contains math functions that take a single input.
+
+  Negate: 000 000 000 BBB
+    Will negate the value stored in Register B via 2's complement.
+    The result is stored in Register B.
+  
+  Absolute_Value: 000 000 001 BBB
+    Will calculate the absolute value of the value stored in Register B.
+    All negatives will be calculated using 2's complement.
+    The result is stored in Register B.
+  
+  Increment: 000 000 010 BBB
+    Will add 1 to the value stored in Register B.
+    The result is stored in Register B.
+  
+  Zero: 000 000 011 BBB
+    Will store 0 in Register B.
+
+Add: 000 001 AAA BBB
+  Will add the values in Register A and Register B.
+  The result is stored in Register B.
+  Works with signed and unsigned values.
+  
+Multiply: 000 010 AAA BBB
+  Will multiply the values in Register A and Register B.
+  The result is stored in Register B.
+  Works with signed and unsigned values.
+
+Divide: 000 011 AAA BBB
+  Will divide the value in Register A by the value in Register B.
+  The result is stored in Register B.
+  Only works with signed values.
+  
+Modulo: 000 100 AAA BBB
+  Will calculate the remainder when the value in Register A is divided by the
+    absolute value of the value in Register B.
+  The result is stored in Register B.
+  Only works with signed values.
+  
+DivideNS: 000 101 AAA BBB
+  Will divide the value in Register A by the value in Register B.
+  The result is stored in Register B.
+  Only works with unsigned values.
+
+ModuloNS: 000 101 AAA BBB
+  Will calculate the remainder when the value in Register A is divided by the
+    value in Register B.
+  The result is stored in Register B.
+  Only works with unsigned values.
+
+Define: 000 111 AAA BBB
+  Will copy the value in Register A into Register B.
+
+--------------------------------------------------------------------------------
+                                      Bool
+--------------------------------------------------------------------------------
+Unary_B: 001 000 XXX
+  This subclass contains boolean functions that take a single input.
+  
+  Hold: 001 000 000 BBB
+    Essentially does nothing.
+    
+  False: 001 000 001 BBB
+    Sets the value of B to 0 (false).
+    
+  True: 001 000 010 BBB
+    Sets the value of B to 1 (true).
+  
+  Not: 001 000 011 BBB
+    Negates the value of B.
+    Result is stored in B.
+  
+And: 001 001 AAA BBB
+  Calculates (A) AND (B).
+  Result is stored in B.
+
+Or: 001 010 AAA BBB
+  Calculates (A) OR (B).
+  Result is stored in B.
+
+Xor: 001 011 AAA BBB
+  Calculates (A) XOR (B).
+  Result is stored in B.
+
+Define: 001 111 AAA BBB
+  Copies the value of A into B.
+
+--------------------------------------------------------------------------------
+                                    Compare
+--------------------------------------------------------------------------------  
+Greater: 001 100 AAA BBB
+  Compares the value in Register A with the value in Register B.
+  Returns true when (A)>(B).
+  Only works with signed values.
+  Result stored in Flip-Flop 0.
+    
+Equals: 001 101 AAA BBB
+  Compares the value in Register A with the value in Register B.
+  Returns true when (A)=(B).
+  Result stored in Flip-Flop 0.
+
+GreaterNS: 001 110 AAA BBB
+  Compares the value in Register A with the value in Register B.
+  Returns true when (A)>(B).
+  Only works with unsigned values.
+  Result stored in Flip-Flop 0.
+
+--------------------------------------------------------------------------------
+                                      Flow
+--------------------------------------------------------------------------------
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+                                     Memory
+--------------------------------------------------------------------------------
+Data: 010 100 XXX BBB
+  Will return the value in the following memory slot.
+  Result is stored in Register B.
+  THIS COMMAND USES TWO MEMORY SLOTS.
+  
+Recall: 010 101 AAA BBB
+  Will return the value stored in memory at the address stored in Register A.
+  Result is stored in Register B.
+
+DO NOT USE.
+  Store: 010 110 XXX BBB
+  Will set the following memory slot to the value stored in Register B.
+DO NOT USE.
+
+Save: 010 111 AAA BBB
+  Will set the memory at the address in Register A to the value stored in
+    Register B.
+
+--------------------------------------------------------------------------------
+                                     Print
+--------------------------------------------------------------------------------
+Text: 011 00X XXX XXX
+  Will print the 7-digit ASCII character XXXXXXX to the screen.
+  Special Characters: 0x10 = new line
+                      0x08 = backspace (will not affect new lines)
+                      0x0C = clear screen
+  Example:
+    011 000 100 001 [3041] will print the letter "A".
+
+Hex: 011 010 AAA BBB
+  Will print the hexadecimal digit in position B of Register A to the screen.
+  B must be from 0 to 2.
+  Positions: 012
+  Letters will be lowercase
+  
+
+Oct: 011 011 AAA BBB
+  Will pring the octal digit in position B of Register A to the screen.
+  B must be from 0 to 3.
+  Positions: 0123
+
+Bin0: 011 100 AAA BBB
+  Will print the binary digit in position B of Register A to the screen.
+  Positions: XXXX01234567
+  The remaining 4 positions are covered in Bin1.
+  
+Bin1: 011 101 AAA BBB
+  Will print the binary digit in position B of Register A to the screen.
+  B must be from 0 to 3.
+  Positions: 0123XXXXXXXX
+  The remaining 8 positions are covered in Bin0.
+  
+Dec: 011 110 AAA BBB
+  Will print the signed decimal digit in position B of Register A.
+  The signed decimal form of Register A is passively calculated internally.
+  All leading zeroes are set to the NULL character.
+  The leading "-" will be set to NULL if the number is non-negative.
+  B must be from 0 to 4.
+  Positions: (04)1234, where (4) is the sign output.
+ 
+Uns: 011 111 AAA BBB
+  Will print the unsigned decimal digit in position B of Register A.
+  The unsigned decimal form of Register A is passively calculated internally.
+  All leading zeroes are set to the NULL character.
+  B must be from 0 to 3.
+  Positions: 0123
+

@@ -1,0 +1,285 @@
+Feb 26, 2017
+------------
+Today I officially decided to start a compiler for a programming language I am
+calling Zinc.  This language will be built to run on a 16-bit computer I am
+going to design on Logisim specifically for this project.  The compiler will be
+built using C++ file io streams.
+
+As of the current moment, the plan for the computer, which I shall name 
+Tin Tin, is to have the memory divided into sections of 8.  The first line will
+include 3 instructions of 5 bits each, and one extra bit which I might try to
+find a use for later.  Each instruction will have 2 lines of arguments, with the
+most significant bit representing the data type. 0 represents an address; 1
+represents raw data.  In effect, this is essentially going to function as a 15
+bit computer with an extra bit.
+
+An example of how an instruction chunk would be organized is as follows:
+0: INST1, INST2, INST3
+1: ARG 1A
+2: ARG 1B
+3: ARG 2A
+4: ARG 2B
+5: ARG 3A
+6: ARG 3B
+7: NULL (alt. ARG 1C, ARG 2C, ARG 3C)
+
+Essentially the instruction chunks could be made into gropus of 7, but I want to
+go with 8 since it's a power of 2 and will make it easier to check if the
+compiler is working properly later.
+
+The memory will be divided into 0000-7fff for instruction, 8000-feff for
+variables, and ff00-ffff for pointers and temp storage. (These last 2 divisions
+are subject to change.)
+
+Zinc will likely be a mashup of elements I have seen in other languages.  For 
+example,
+
+If <condition> Then <stuff> Else <stuff> End
+While <condition> Do <stuff> End
+For <var>, <start>, <finish>, <optional: step> Do <stuff> End
+<variable> + <variable> >> <variable>
+
+I am debating whether or not to include a variable marker in Zinc, such as
+using $myVariable instead of just myVariable. If I do not use a marker, I am
+planning on requiring all variable names to start with lowercase letters just to
+make the compiler easier to create.  This would also require that all Zinc
+keywords start with a capital letter.  Of course, this could also be reversed.
+
+Although this might lead to an overall slower computer, the current plan is for
+Tin Tin to load an entire instruction block from RAM into a small register bank 
+every fourth cycle.  To perform $a + $b >> $c, it will
+
+1. load $a from RAM
+2. load $b from RAM
+3. passively compute the sum
+4. store this result into a RAM address in the ff00-ffff range determined by the
+   compiler and dictated by ARG C, $temp
+   
+5. load $temp from RAM
+6. load $c from RAM (by default)
+7. null
+8. store $temp into $c.
+
+This will take place over 2 instructions.  Note: when loading from RAM,
+the logic circuit will esure that raw data is taken as raw data, and addresses
+are taken as addresses.  I expect for the equation parser to be one of the most
+difficult parts of the compiler to create because of all of the temp variables
+it will have to keep track of.
+
+If an equation calls for an element of an array, e.g. #arr$h % $i >> #arr$h
+(this syntax is by no means official), it will happen over 3 instructions:
+
+1. add $h with &arr, where &arr is the base address of #arr, and store that to 
+   $tempA as an address
+2. mod $tempA with $j and store that to $tempB
+3. assign $tempB to $tempA
+
+------------
+Feb 27, 2017
+------------
+Instead of creating an entirely new computer, one thing I could think about is
+using the 12 bit computer I created over break.  I ran some tests today and
+found that the source of all (or at least most) of the errors that it was 
+running into were a result of the setting that adds noise to component delays.
+I'm guessing that occasionally a signal would be processed out of order which
+caused the wrong result to be stored.  If I go with this plan, I shall name the 
+computer Berk.  I have removed the 7-segment LED displays from Berk and
+increased the size of the log, but kept the original as a backup.  On thing I
+would like to do is implement some sort of system input either involving the
+keyboard function or buttons.
+
+------------
+Mar 02, 2017
+------------
+Today I got to work implementing some of the background elements of the
+compiler, such as the settings struct for the options Overwrite, Live_Report, 
+and Copy_Header.  This also included creating a getSettings() function that will
+automatically create a "config.txt" file if there is not one already in the 
+folder.  I also created a function that starts the read ifstream at the BEGIN
+command; this function inculdes the Copy_Header option, which will copy
+everything before BEGIN to the write ofstream file.  I also included the
+Overwrite setting to the getFiles() function.  It seems to be working properly.
+
+I also set in place the Instruction class, which contains 12 bits of data for
+Berk in octal* and hex, as well as a copy of the instruction in plain english.
+In its current state, the octal numbers are just decimal numbers with digits
+that function as though it is in base 8.
+
+Ya know, originally I was really reluctant to use classes for this project
+because they're such a pain to set up, but now I'm feeling pretty optimistic
+about this going forward.
+
+I think what I'm going to have to do is create an array of Instruction's.  I had
+planned on just outputting everything directly to the output file, but then I
+ran into some issues figuring out how to do this with If statements.  The
+problem is that the compiler would not know how far ahead to jump in the case
+that the statement was not true until it reached the Else or End statements.
+Clearly this runs into issues because you would need to go back through the
+entire file to get to the point where the jump-to address needed inserted and
+then insert it, and I'm not even sure if this is possible with C++.  Using
+arrays, the entire output file can be read and written to all at once.
+
+What I'm thinking is I'll have the first thing the compiler do after finding the
+BEGIN statement is work through the entire file, up the the END statement, and
+store the instructions it comes across in an array.  Now the question is whether
+to parse the equations as soon as the compiler gets to them or to just leave
+some indicator in the Instruction's array saying that there is going to be
+inserted there.  I can see some complications with both.  One option, although
+it would result in programs not running as fast, is jumping to a location
+further alongin the memory for equations then jumping back.  This way an array
+of equations could be kept and parsed later without worry about how long they
+are.
+
+------------
+Mar 03, 2017
+------------
+Today I decided to look through my online notes on how to program Berk and found
+an alarming amount of information missing. By this I mean that there are many
+commands that it is not immediately clear what they do or how to use them. These
+sorts of things were present in my handwritten notes, but I do not know where
+those are anymore.  Now the question is whether I should shift my attention to
+constructing a new computer specifically for this project like I had originally
+intended, or do I work on figuring out how to use all of the commands and write
+proper documentation for them.
+
+If my memory serves correctly, there is no built-in command to get a value from
+any given RAM address and store it in a register, but the workaround to this is
+that you can store the address in a register and then get the value stored in
+RAM at the address specified by the register.  Given this, the string of
+commands for equations in Berk is going to be even longer than I had
+anticipated.  Of course, some values could be kept in the registers for as long
+as needed.  I think I could probably set up the equation parser to track this
+using static variables.
+
+------------
+Mar 04, 2017
+------------
+Today I set up the Layer class, which will keep track of if/while/for statements
+and where program needs to jump to in the case that the conditions are not met.
+I also did some work in Main getting some of the easy commands out of the way, 
+such as Print, Line, and System.  I put some code in to define the Then
+statement, but did not get it complete.  While programming the Then statement I
+realized that the comparison circuits in Berk will make it difficult to program
+a compiler to use them effectively.  This is perhaps the biggest draw to making
+a new 16 bit computer.  The other option would be to rebuild the comparator in
+Berk.  While I'm at it, I might as well see what else needs tweaking and write
+some proper documentation for it.  My current idea is to have an 8 bit register
+that will hold 8 boolean values.  When the ALU/comparator receives a boolean
+operation as an instruction, instead of representing registers, the two 
+arguments will represent bits in the bool register.
+
+Update: I have spent the past several hours working on Appendix B in the
+Appendix.txt document and rewiring the ALU and register bank to support the
+changes.  I added 8 flip-flops to act as the boolean register.  The reason I
+did not just use an 8 bit register is because the computer needs to be able to 
+read 2 values at once.  I also moved the storage mode register into the Register
+Bank itself and added another one for the bools.  Within the ALU I removed all
+of the bitwise functions and the Mult-Hi function.  I put a comparator in the
+ALU and hooked it up so that it should now appropriately handle negative
+numbers.
+
+Tomorrow or the next day I plan on adding the rest of the bool and unary
+functions.  Oh wait!  I just realized that the regissters I put in the Register
+Bank to store where the data is stored won't work because there are some
+functions that need to act as exceptions.  I suppose I'll be re-reworking that
+tomorrow as well.  More than likely it will just end up back in the RBI.
+
+------------
+Mar 05, 2017
+------------
+Today I did some more work rewiring the ALU and register bank of Berk.  I also
+made some changes to the Appendix B that should come in useful both for the
+wiring and the programming of the compiler.  Anywho, I'm gonna go play some HotS
+with Johnathan.
+
+------------
+Mar 07, 2017
+------------
+Today I added the Print, Memory, and Flow classes to Appendix B.  I also added
+the Print class to Appendix C.  I also rewired the Log subcircuit of Berk.  One
+thing I realized after I had that rewired is that the comparitor is hard wired
+to compare numbers given in 12-bit 2's-complement, and the fact that I have an
+option to print unsigned decimal numbers sort of implies that I intend on having
+some numbers that I am going to want to be unsigned when I compare them.  I
+guess for now it can stay the way it is.  I haven't thought this all the way
+through yet, but I think one way I might be able to test if a variable is 
+greater than a "negative" constant is to use the Less_Than test.
+
+------------
+Mar 09, 2017
+------------
+Today I had a revelation: I have no need for both > and < functions.  One will
+suffice.  This opened up a function for me to use for the unsigned comparator
+function.  I also figured out that the multiplication circuit works for both
+signed and unsigned values, but the division circuit does not.  Therefore, I am
+moving the Clear_Math and Clear_Bool functions and using those spaces to create
+signed and unsigned versions of the division and modulo functions.
+
+During class today I realized that none of my sibcircuits have subcircuits, so
+after I finish rewiring Berk I think it will be cool to copy all of the
+subcircuit schematics into another document so that all of the wiring is on a
+single plane.  Then I can print it out and show it off to people ^_^.  I went
+ahead and copied over the ALU and Register Bank into a new file and started
+compressing the wires to take up as little space as possible.  Unfortunately (or
+maybe fortunately?) I then had the habit of constantly trying to compress things
+further as I was working on the normal Berk.
+
+Another major development is that I decided to permanently make all ALU
+functions store the result in Register B.  Of course, now I have to go in and
+add exceptions for commands such as the compare functions.  I think the rest of
+the functions should be just fine using Register B though.  The compare 
+functions are going to send their results to Flip-flop 0.
+
+One of the last things I worked on tonight was the RBI.  Since I am no longer
+going to require memory to determine where values shoudl be stored, I was able
+to delete almost the entire circuit by default.  It also helps that I no longer
+need the GCMP and GCRY functions.  This leaves left the ENABLE (x2 now) logic, 
+determining what data to pass on, and the new clear functions, assuming they
+make it into the final build.
+
+One thing that I learned today while playing with the modified comparator is
+that when dealing with values close to -2048 there are instances where the
+circuit will get the wrong result due to overflow.  Fortunately the computer
+shouldn't have to deal with values like that very often.  If it does become a
+problem, I suppose it will be time to upgrade to 18 bit.
+
+On one hand it is tempting to try to create my own RAM unit, but on the other
+hand I know that that will only cause Logisim to run snail speed and stop
+working properly.  At the very least I should create a division circuit just to
+prove that I know how to do it.
+
+One last thing before I sign off for the day: I added all of the math, bool, and
+compare functions to Appendix C.  I am going to have to fix a few things in it
+regarding where information is stored when I get the chance.
+
+------------
+Mar 10, 2017
+------------
+WOOOOOOOOOOOOOOOOOOOOOOT!!! I finished Berk!  After Finishing it normally I
+did what I mentioned last night and copied all of the schematics into one large
+file so that everything is visible.  I ended up doing quite a bit of debugging
+on this version that did not get carried over to the original version.
+Therefore, I think this flattened version is going to be the main version I work
+with from now on.  I exported an image of it; I want to send it to Dr. Wunsch to
+see what he thinks about it.
+
+I still need to finish writing the Appendix, and now that I have Berk done there
+is outdated code in the Zinc compiler.  Speaking of the Zinc compiler, I had two
+thoughts today.  The first is that I could create a new file type for the input
+and output files.  For example: .zn or .zinc.  The second is that I could format
+Appendix B and use it as a reference for the compiler.  That way if I add more
+to Berk all I will have to do is update the Appendix.  Of course this would be
+difficult to do and I can already think of a number of ways this could go wrong,
+but it is an interesting idea to explore none-the-less.
+
+
+
+
+
+
+
+
+
+
+
+
